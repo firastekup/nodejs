@@ -1,7 +1,12 @@
 const express = require('express');
-
-// create instance of express
+const mongoose=require('mongoose')
 const app = express();
+const dotnet = require('dotenv')
+dotnet.config()
+const mongo_url = process.env.mongo_url
+const port = process.env.PORT || 5000
+
+
 
 app.get('/', (req, res) => {
   res.send('welcome back');
@@ -41,9 +46,23 @@ app.get("/all",(req,res)=>{
     res.send(array)
   });
 
-app.listen(9000, () => {
-  console.log('listening on port 9000');
-});
+  app.get('/',(req,res)=>{})
+mongoose.connect(mongo_url).then(()=>{
+   console.log('connected')
+   app.listen(port,()=>{
+    console.log(`runing on port: ${port}`)
+  })
+  
+})
+.catch((err)=>{
+  console.error('eureur')
+})
+
+
+
+
+
+
 
 
 
