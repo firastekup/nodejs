@@ -1,50 +1,48 @@
-const express = require ("express")
+const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
+const User = require('./models/User');
 
+router.post('/register', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    let user = await User.findOne({ email });
 
-app.get('/', (req, res) => {
-  res.send('welcome back');
+    if (user) {
+      return res.status(400).json({ message: "L'utilisateur existe déjà" });
+    }
+
+    user = new User({ email, password });
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    await user.save();
+
+    res.status(200).json({ message: "Utilisateur enregistré avec succès" });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Erreur Serveur');
+  }
 });
 
-app.get('/template', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "Identifiants invalides" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Identifiants invalides" });
+    }
+
+    res.status(200).json({ message: "Connexion réussie" });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Erreur Serveur');
+  }
 });
 
-app.get('/middle', (req, res, next) => {
-  console.log('request number 1');
-  next();
-}, (req, res, next) => {
-  console.log('request number 2');
-  res.send('Both requests processed');
-});
-
-
-
-
-
-
-router.get('/auth/login',(req,res)=>{ 
-    res.send("<h1>message with html<h1/>")})
-    //2
-    router.get("/auth/register", (req, res)=>{res.sendFile(__dirname+'/test.html')})
-    
-    const tab=[{id:1,nom:"firas",prenom:"firas"},{id:2,nom:"hamda",prenom:"hamda!!"}];
-    //3
-    router.get("/all",(req,res)=>{
-    
-      res.json(tab)
-    })
-    
-    //4
-    
-      router.get("/post/:id", (req, res) => {
-        const id = req.params.id;
-        const array = tab.find(user => user.id === parseInt(id));
-        res.send(array)
-      });
-    
-    router.listen(9000, () => {
-      console.log('listening on port 9000');
-    });
-    
-    module.exports=router
+module.exports = router;
